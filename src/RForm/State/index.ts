@@ -24,7 +24,6 @@ class State<T>{
    onChange<T>({ value, path }: OnChange<T>) {
 
       dot.set(path, value, this.state as unknown as object)
-
       // this.state = dot.merge(this.state, path, value)
 
       this.subscribers.forEach(fn => fn(this.getState))

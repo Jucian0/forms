@@ -16,7 +16,12 @@ interface InputsRegister {
    radio: RadioRegister,
    number: InputRegister<InputProps, React.InputHTMLAttributes<HTMLInputElement>>,
    custom: CustomSelect
-   date: any
+   date: InputRegister<InputProps, React.InputHTMLAttributes<HTMLInputElement>>,
+   customDate: CustomDate,
+   email: InputRegister<InputProps, React.InputHTMLAttributes<HTMLInputElement>>,
+   file: InputRegister<InputProps, React.InputHTMLAttributes<HTMLInputElement>>,
+   range: InputRegister<InputProps, React.InputHTMLAttributes<HTMLInputElement>>,
+
 }
 
 export type UseFormR<TValues> = [
@@ -26,7 +31,9 @@ export type UseFormR<TValues> = [
 
 export type RadioRegister = (e: FieldParam<InputProps>, ...args: Array<string>) => React.InputHTMLAttributes<HTMLInputElement>
 export type InputRegister<TParam, TInputPropsReturn> = (e: FieldParam<TParam>) => TInputPropsReturn
-export type CustomSelect = <Custom>(e: Custom) => CustomFieldProps
+export type CustomSelect = <Custom>(e: Custom) => CustomSelectProps
+export type CustomDate = <Custom>(e: Custom) => CustomDateProps<string>
+
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
    name: string
@@ -45,8 +52,13 @@ export type CustomFieldParam<TValue = string> = {
    label: string
 }
 
-export interface CustomFieldProps {
+export interface CustomSelectProps {
    onChange?: (e: any, option?: any) => void
    defaultValue: CustomFieldParam
    value: CustomFieldParam
+}
+
+export interface CustomDateProps<TValue> {
+   onChange: (e: any) => void
+   value: TValue
 }

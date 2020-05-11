@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import './App.css';
 import { useForm } from './RForm';
-import Select, { OptionsType } from 'react-select';
+import Select from 'react-select';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -28,13 +28,17 @@ const initialState = {
     "flavor": options[2]
   },
   year: null,
-  "birthday": null
+  "birthday": null,
+  date: null
 }
 
 const App: React.FC = () => {
 
 
-  const [values, { text, checkbox, radio, select, number, custom, date }] = useForm(initialState, { onChange: true })
+  const [
+    values,
+    { text, checkbox, radio, select, number, custom, date, customDate, email, file }
+  ] = useForm(initialState, { onChange: true })
 
 
   useEffect(() => {
@@ -51,11 +55,16 @@ const App: React.FC = () => {
         </div>
         <div className="form-group">
           <label>E-mail</label>
-          <input className="form-control" autoComplete="off" {...text("email")} />
+          <input className="form-control" autoComplete="off" {...email("email")} />
         </div>
         <div className="form-group">
           <label>Password</label>
           <input className="form-control" autoComplete="off" {...text("password")} />
+        </div>
+
+        <div className="form-group">
+          <label>Accept</label>
+          <input className="form-control" autoComplete="off" {...file("file")} />
         </div>
 
         <div className="form-group">
@@ -78,23 +87,21 @@ const App: React.FC = () => {
         </div>
 
         <div className="form-group">
-          <label>Date</label>
+          <label>Native Web Date</label>
+          <input className="form-control" autoComplete="off" {...date("date")} />
+        </div>
+
+        <div className="form-group">
+          <label>Date Picker</label>
           <DatePicker
             selected={values.year}
-            {...date("year")}
+            {...customDate("year")}
             showTimeSelect
             timeFormat="HH:mm"
             timeIntervals={15}
             timeCaption="time"
             dateFormat="MMMM d, yyyy h:mm aa"
           />
-          <DatePicker
-            selected={values.birthday}
-            showPopperArrow={false}
-            {...date("birthday")}
-          />
-          <input className="form-control" autoComplete="off" type="date" />
-
         </div>
 
         <div className="form-group">
@@ -127,7 +134,7 @@ const App: React.FC = () => {
           <h3>Address</h3>
           <div className="form-group">
             <label>Street</label>
-            <input className="form-control" autoComplete="off" {...text({ name: "street" })} />
+            <input className="form-control" autoComplete="off" {...text({ name: "address[0].street" })} />
           </div>
           <div className="form-group">
             <label>Number</label>
