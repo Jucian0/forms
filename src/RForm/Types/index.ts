@@ -21,11 +21,18 @@ interface InputsRegister {
    email: InputRegister<InputProps, React.InputHTMLAttributes<HTMLInputElement>>,
    file: InputRegister<InputProps, React.InputHTMLAttributes<HTMLInputElement>>,
    range: InputRegister<InputProps, React.InputHTMLAttributes<HTMLInputElement>>,
+   password: InputRegister<InputProps, React.InputHTMLAttributes<HTMLInputElement>>,
+}
 
+interface FormState<TValues> {
+   values: TValues
+   onSubmit: (fn: (values: TValues) => void) => void
+   reset: () => void
+   resetField: (field: string) => void
 }
 
 export type UseFormR<TValues> = [
-   TValues,
+   FormState<TValues>,
    InputsRegister
 ]
 
@@ -55,7 +62,7 @@ export type CustomFieldParam<TValue = string> = {
 export interface CustomSelectProps {
    onChange?: (e: any, option?: any) => void
    defaultValue: CustomFieldParam
-   value: CustomFieldParam
+   // value: CustomFieldParam
 }
 
 export interface CustomDateProps<TValue> {

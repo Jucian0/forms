@@ -6,7 +6,7 @@ type OnChange<T> = {
    path: string
 }
 
-class State<T>{
+class State<T extends {}>{
 
    private state: T = Object.assign({});
    private subscribers: Array<(e: T) => void> = []
@@ -23,16 +23,18 @@ class State<T>{
 
    onChange<T>({ value, path }: OnChange<T>) {
 
-      dot.set(path, value, this.state as unknown as object)
-      // this.state = dot.merge(this.state, path, value)
+      dot.set(path, value, this.state as object)
 
-      this.subscribers.forEach(fn => fn(this.getState))
+      this.notify()
+   }
 
+   reset<T>(values: T, path: string) {
+      dot.set(path, values, this.state as object)
+      this.notify()
    }
 
    getValue(path: string) {
       return dot.pick(path, this.state)
-      // return dot.get(this.state, path)
    }
 
    subscribe(fn: (e: T) => void) {
@@ -41,6 +43,10 @@ class State<T>{
       return () => {
          this.subscribers = this.subscribers.filter(subscribe => subscribe !== fn)
       }
+   }
+
+   notify() {
+      this.subscribers.forEach(fn => fn(this.getState))
    }
 
 

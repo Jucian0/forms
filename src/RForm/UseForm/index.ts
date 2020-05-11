@@ -7,6 +7,7 @@ import { OptionsGetValues, FieldParam, InputProps, SelectProps, FieldCheckedPara
 export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetValues?: OptionsGetValues): UseFormR<TInitial> {
 
    const state = useRef(new State(initialState))
+   const resetState = useRef<{ [x: string]: any }>(initialState)
    const [values, setValues] = useState(initialState)
    const setValuesDebounce = useCallback(debounce(setValues, optionsGetValues?.debounce || 500), [optionsGetValues])
    const setValuesOnChange = setValues
@@ -21,7 +22,19 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
       }
    }
 
+   function onSubmit(fn: (values: TInitial) => void) {
+      return fn(state.current.getState)
+   }
 
+   function reset() {
+      state.current.reset(resetState.current, "")
+   }
+
+   function resetField(field: string) {
+      if (resetState.current.hasOwnProperty(field)) {
+         state.current.reset(resetState.current[field], field)
+      }
+   }
 
    function select(param: FieldParam<SelectProps>): React.InputHTMLAttributes<HTMLSelectElement> {
       function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -36,18 +49,19 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
       return {
          defaultValue: state.current.getValue(complementProps.name),
          onChange: onChange,
-         type: "checkbox",
+         type: "select",
          ...complementProps
       }
    }
 
    function baseInput(param: FieldParam<InputProps>, type: string) {
       function onChange(e: React.ChangeEvent<HTMLInputElement>) {
-
          state.current.onChange({
             path: e.target.name,
             value: type === "number" ? e.target.valueAsNumber :
-               type === 'date' ? e.target.valueAsDate : e.target.value
+               type === 'date' ? e.target.valueAsDate :
+                  type === 'file' ? e.target.files :
+                     e.target.value
          })
       }
 
@@ -63,7 +77,6 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
 
    function baseCheckbox(param: FieldParam<InputProps>, type: string, ...args: Array<any>) {
       function onChange(e: React.ChangeEvent<HTMLInputElement>) {
-
          state.current.onChange({
             path: e.target.name,
             value: e.target.checked
@@ -94,12 +107,16 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
       return {
          defaultValue: state.current.getValue(complementProps.name),
          onChange: onChange,
-         value: state.current.getValue(complementProps.name)
+         selected: state.current.getValue(complementProps.name)
       }
    }
 
    function text(param: FieldParam<InputProps>): React.InputHTMLAttributes<HTMLInputElement> {
       return baseInput(param, "text")
+   }
+
+   function password(param: FieldParam<InputProps>): React.InputHTMLAttributes<HTMLInputElement> {
+      return baseInput(param, "password")
    }
 
    function email(param: FieldParam<InputProps>): React.InputHTMLAttributes<HTMLInputElement> {
@@ -135,7 +152,7 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
    }
 
    function customDate<Custom = any>(param: Custom): CustomDateProps<string> {
-      return baseCustom(param)
+      return baseCustom(param) as unknown as CustomDateProps<string>
    }
 
    useEffect(() => {
@@ -148,5 +165,5 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
    }, [])
 
 
-   return [values, { text, checkbox, radio, select, number, custom, customDate, date, email, file, range }]
+   return [{ values, onSubmit, reset, resetField }, { text, checkbox, radio, select, number, custom, customDate, date, email, file, range, password }]
 }

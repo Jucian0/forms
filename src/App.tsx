@@ -36,10 +36,15 @@ const App: React.FC = () => {
 
 
   const [
-    values,
-    { text, checkbox, radio, select, number, custom, date, customDate, email, file }
-  ] = useForm(initialState, { onChange: true })
+    { values, onSubmit, reset, resetField },
+    { text, checkbox, radio, select, number, custom, date, customDate, email, file, range, password }
+  ] = useForm(initialState)
 
+  const submit = () => {
+    onSubmit(data => {
+      console.log(data)
+    })
+  }
 
   useEffect(() => {
     console.log(values)
@@ -59,12 +64,17 @@ const App: React.FC = () => {
         </div>
         <div className="form-group">
           <label>Password</label>
-          <input className="form-control" autoComplete="off" {...text("password")} />
+          <input className="form-control" autoComplete="off" {...password("password")} />
         </div>
 
         <div className="form-group">
-          <label>Accept</label>
-          <input className="form-control" autoComplete="off" {...file("file")} />
+          <label>Files</label>
+          <input className="form-control" {...file("file")} />
+        </div>
+
+        <div className="form-group">
+          <label>Files</label>
+          <input className="form-control" {...range("range")} />
         </div>
 
         <div className="form-group">
@@ -94,7 +104,7 @@ const App: React.FC = () => {
         <div className="form-group">
           <label>Date Picker</label>
           <DatePicker
-            selected={values.year}
+            //selected={values.year}
             {...customDate("year")}
             showTimeSelect
             timeFormat="HH:mm"
@@ -107,6 +117,16 @@ const App: React.FC = () => {
         <div className="form-group">
           <label>Select Option</label>
           <select {...select("options")}>
+            <option value="value 1">Option 1</option>
+            <option value="value 2">Option 2</option>
+            <option value="value 3">Option 3</option>
+            <option value="value 4">Option 4</option>
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label>Select Multi</label>
+          <select multiple {...select("options-multi")}>
             <option value="value 1">Option 1</option>
             <option value="value 2">Option 2</option>
             <option value="value 3">Option 3</option>
@@ -142,7 +162,10 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        <button type="button" className="btn btn-primary">Submit</button>
+        <button type="button" className="btn btn-primary" onClick={submit}>Submit</button>
+
+        <button type="button" className="btn btn-primary" onClick={reset}>Clear</button>
+
       </form >
     </div >
   );
