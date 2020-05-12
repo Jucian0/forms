@@ -69,3 +69,6 @@ export interface CustomDateProps<TValue> {
    onChange: (e: any) => void
    value: TValue
 }
+
+
+export type ListRef = { [x: string]: React.Ref<HTMLInputElement> }

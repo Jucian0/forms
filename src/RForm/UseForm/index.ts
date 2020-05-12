@@ -2,7 +2,8 @@
 import { useRef, useState, useEffect, useCallback, createRef } from "react"
 import State from "../State"
 import { debounce } from "../Debounce"
-import { OptionsGetValues, FieldParam, InputProps, SelectProps, FieldCheckedParam, UseFormR, CustomFieldParam, CustomSelectProps, CustomDateProps } from "../Types"
+import { OptionsGetValues, FieldParam, InputProps, SelectProps, FieldCheckedParam, UseFormR, CustomFieldParam, CustomSelectProps, CustomDateProps, ListRef } from "../Types"
+import { setReferenceValue } from "../Utils"
 
 
 export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetValues?: OptionsGetValues): UseFormR<TInitial> {
@@ -13,10 +14,10 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
    const setValuesDebounce = useCallback(debounce(setValues, optionsGetValues?.debounce || 500), [optionsGetValues])
    const setValuesOnChange = setValues
 
-   const listRef = useRef<{ [x: string]: any }>()
+   const listRef = useRef<ListRef>({})
 
    const resolveRefs = useCallback((path: string) => {
-      listRef.current = ({ ...listRef.current, [path]: createRef() })
+      listRef.current = { ...listRef.current, [path]: createRef() }
    }, [])
 
    function resolveOptionsGetValues(e: TInitial) {
@@ -34,13 +35,21 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
 
    function reset() {
       state.current.reset(resetState.current)
-      Object.keys((listRef as any).current).forEach((ref: any) => {
-         (listRef as any).current[ref].current.value = state.current.getValue(ref) || String()
+      Object.keys(listRef.current as ListRef).forEach(field => {
+         resetField(field)
       })
    }
 
    function resetField(field: string) {
       state.current.resetField(resetState.current, field)
+      setReferenceValue(listRef.current[field], state.current.getValue(field))
+      // if ((listRef.current as any)[field].current.type === 'checkbox') {
+      //    return (listRef as any).current[field].current.checked = state.current.getValue(field)
+      // }
+      // if ((listRef.current as any)[field].current.type === 'radio') {
+      //    return (listRef as any).current[field].current.checked = (listRef as any).current[field].current.value === state.current.getValue(field)
+      // }
+      // return (listRef as any).current[field].current.value = state.current.getValue(field) || ((listRef as any).current[field].current.type === 'number' ? Number() : String())
    }
 
    function select(param: FieldParam<SelectProps>): React.SelectHTMLAttributes<HTMLSelectElement> & { ref: any, type: string } {
@@ -94,13 +103,16 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
          })
       }
 
-      const complementProps = (typeof param === 'string') ? { name: param } : { ...param }
+      const complementProps = (typeof param === 'string') ? { name: param, value: args[0] } : { ...param }
+
+      resolveRefs(complementProps.name)
 
       return {
-         defaultValue: type === 'checkbox' ? state.current.getValue(complementProps.name) :
+         defaultChecked: type === 'checkbox' ? state.current.getValue(complementProps.name) :
             state.current.getValue(complementProps.name) === (args[0] || (param as any).value),
          onChange: onChange,
          type,
+         ref: listRef.current?.[complementProps.name],
          ...complementProps
       }
    }
@@ -155,7 +167,7 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
    }
 
    function radio(param: FieldCheckedParam<InputProps>, ...args: Array<string>): React.InputHTMLAttributes<HTMLInputElement> {
-      return baseCheckbox(param, "radio", args)
+      return baseCheckbox(param, "radio", ...args)
    }
 
    function custom<Custom = any>(param: Custom): CustomSelectProps {

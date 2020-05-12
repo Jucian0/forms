@@ -29,7 +29,8 @@ const initialState = {
   },
   year: null,
   "birthday": null,
-  date: null
+  date: null,
+  accept: true
 }
 
 const App: React.FC = () => {
@@ -137,15 +138,15 @@ const App: React.FC = () => {
           <label>Radio Options</label>
           <div className="form-check">
             <input className="form-check-input" {...radio({ name: "radio", value: "op1" })} />
-            <label className="form-check-label" htmlFor="exampleRadios1" >Default radio</label>
+            <label className="form-check-label" htmlFor="exampleRadios1" >OP1</label>
           </div>
           <div className="form-check">
             <input className="form-check-input" {...radio("radio", "op2")} />
-            <label className="form-check-label" htmlFor="exampleRadios2" >Second default radio</label>
+            <label className="form-check-label" htmlFor="exampleRadios2" >OP2</label>
           </div>
           <div className="form-check disabled">
             <input className="form-check-input" {...radio("radio", "op3")} />
-            <label className="form-check-label" htmlFor="exampleRadios3" >Disabled radio</label>
+            <label className="form-check-label" htmlFor="exampleRadios3" >OP3</label>
           </div>
         </div >
 
@@ -163,7 +164,9 @@ const App: React.FC = () => {
 
         <button type="button" className="btn btn-primary" onClick={submit}>Submit</button>
 
-        <button type="button" className="btn btn-primary" onClick={reset}>Clear</button>
+        <button type="button" className="btn btn-primary" onClick={() => resetField("address.0.number")}>Reset number</button>
+        <button type="button" className="btn btn-primary" onClick={() => reset()}>Reset All</button>
+
 
       </form >
     </div >
