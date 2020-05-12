@@ -1,4 +1,4 @@
-import dot from 'dot-object'
+import dot from 'dot-prop-immutable'
 
 
 type OnChange<T> = {
@@ -23,18 +23,25 @@ class State<T extends {}>{
 
    onChange<T>({ value, path }: OnChange<T>) {
 
-      dot.set(path, value, this.state as object)
+      this.state = dot.set(this.state, path, value)
 
       this.notify()
    }
 
-   reset<T>(values: T, path: string) {
-      dot.set(path, values, this.state as object)
+   reset<T>(values: T) {
+      this.state = values as any
+      this.notify()
+   }
+
+   resetField<T>(values: T, field: string) {
+      const value = dot.get(values, field)
+
+      this.state = dot.set(this.state, field, value)
       this.notify()
    }
 
    getValue(path: string) {
-      return dot.pick(path, this.state)
+      return dot.get(this.state, path)
    }
 
    subscribe(fn: (e: T) => void) {
@@ -48,7 +55,6 @@ class State<T extends {}>{
    notify() {
       this.subscribers.forEach(fn => fn(this.getState))
    }
-
 
 }
 

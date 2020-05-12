@@ -104,7 +104,6 @@ const App: React.FC = () => {
         <div className="form-group">
           <label>Date Picker</label>
           <DatePicker
-            //selected={values.year}
             {...customDate("year")}
             showTimeSelect
             timeFormat="HH:mm"
@@ -154,11 +153,11 @@ const App: React.FC = () => {
           <h3>Address</h3>
           <div className="form-group">
             <label>Street</label>
-            <input className="form-control" autoComplete="off" {...text({ name: "address[0].street" })} />
+            <input className="form-control" autoComplete="off" {...text({ name: "address.0.street" })} />
           </div>
           <div className="form-group">
             <label>Number</label>
-            <input className="form-control" autoComplete="off" {...number("address[0].number")} />
+            <input className="form-control" autoComplete="off" {...number("address.0.number")} />
           </div>
         </div>
 

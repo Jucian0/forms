@@ -1,4 +1,5 @@
-import { useRef, useState, useEffect, useCallback } from "react"
+/* eslint-disable react-hooks/rules-of-hooks */
+import { useRef, useState, useEffect, useCallback, createRef } from "react"
 import State from "../State"
 import { debounce } from "../Debounce"
 import { OptionsGetValues, FieldParam, InputProps, SelectProps, FieldCheckedParam, UseFormR, CustomFieldParam, CustomSelectProps, CustomDateProps } from "../Types"
@@ -12,13 +13,18 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
    const setValuesDebounce = useCallback(debounce(setValues, optionsGetValues?.debounce || 500), [optionsGetValues])
    const setValuesOnChange = setValues
 
+   const listRef = useRef<{ [x: string]: any }>()
+
+   const resolveRefs = useCallback((path: string) => {
+      listRef.current = ({ ...listRef.current, [path]: createRef() })
+   }, [])
 
    function resolveOptionsGetValues(e: TInitial) {
       if (optionsGetValues?.debounce) {
-         return setValuesDebounce({ ...e })
+         return setValuesDebounce(e)
       }
       if (optionsGetValues?.onChange) {
-         return setValuesOnChange({ ...e })
+         return setValuesOnChange(e)
       }
    }
 
@@ -27,16 +33,17 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
    }
 
    function reset() {
-      state.current.reset(resetState.current, "")
+      state.current.reset(resetState.current)
+      Object.keys((listRef as any).current).forEach((ref: any) => {
+         (listRef as any).current[ref].current.value = state.current.getValue(ref) || String()
+      })
    }
 
    function resetField(field: string) {
-      if (resetState.current.hasOwnProperty(field)) {
-         state.current.reset(resetState.current[field], field)
-      }
+      state.current.resetField(resetState.current, field)
    }
 
-   function select(param: FieldParam<SelectProps>): React.InputHTMLAttributes<HTMLSelectElement> {
+   function select(param: FieldParam<SelectProps>): React.SelectHTMLAttributes<HTMLSelectElement> & { ref: any, type: string } {
       function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
          state.current.onChange({
             path: e.target.name,
@@ -45,12 +52,14 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
       }
 
       const complementProps = (typeof param === 'string') ? { name: param } : { ...param }
+      resolveRefs(complementProps.name)
 
       return {
+         ref: listRef.current?.[complementProps.name],
          defaultValue: state.current.getValue(complementProps.name),
          onChange: onChange,
          type: "select",
-         ...complementProps
+         ...complementProps,
       }
    }
 
@@ -66,11 +75,13 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
       }
 
       const complementProps = (typeof param === 'string') ? { name: param } : { ...param }
+      resolveRefs(complementProps.name)
 
       return {
          defaultValue: state.current.getValue(complementProps.name),
          onChange: onChange,
          type,
+         ref: listRef.current?.[complementProps.name],
          ...complementProps
       }
    }
@@ -156,7 +167,6 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
    }
 
    useEffect(() => {
-
       const subscriber = state.current.subscribe(resolveOptionsGetValues)
 
       return () => {
