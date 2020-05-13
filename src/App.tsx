@@ -70,7 +70,7 @@ const App: React.FC = () => {
 
         <div className="form-group">
           <label>Files</label>
-          <input className="form-control" {...file("file")} />
+          <input className="form-control" {...file("file")} multiple />
         </div>
 
         <div className="form-group">

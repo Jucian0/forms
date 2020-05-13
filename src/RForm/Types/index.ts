@@ -71,4 +71,5 @@ export interface CustomDateProps<TValue> {
 }
 
 
-export type ListRef = { [x: string]: React.Ref<HTMLInputElement> }
+export type ListInputsRef = { [x: string]: React.RefObject<HTMLInputElement> }
+export type Ref = React.RefObject<HTMLInputElement>

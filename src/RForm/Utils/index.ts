@@ -1,12 +1,14 @@
+import { Ref } from "../Types";
+
 export function InputType(ref: any) {
    return ref.type
 }
 
-export function setReferenceValue(ref: any, value: any) {
-
+export function setReferenceValue(ref: Ref, value: any) {
+   if (!ref.current) {
+      return
+   }
    switch (ref.current?.type) {
-      case 'number':
-         return ref.current.value = Number(value) || Number();
       case 'checkbox':
          return ref.current.checked = Boolean(value)
       case 'radio':
@@ -15,7 +17,7 @@ export function setReferenceValue(ref: any, value: any) {
          console.log(ref.current)
          return ref.current.files = value || null
       default:
-         return ref.current.value = String(value) || String()
+         return ref.current.value = String(value)
    }
 
 }
