@@ -142,7 +142,7 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
          subscriberOnReset()
          subscriberOnResetField()
       }
-   }, [])
+   }, [resolveOptionsGetValues])
 
 
    return [
@@ -150,7 +150,6 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
       { input, context: state.current }
    ]
 }
-
 
 
 export function useCustom<TInitial>(context: State<TInitial>): [any, any] {
