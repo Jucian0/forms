@@ -1,9 +1,18 @@
 /* eslint-disable react-hooks/rules-of-hooks */
-import { useRef, useState, useEffect, useCallback, createRef } from "react"
+import { useRef, useState, useEffect, useCallback, createRef, ChangeEvent } from "react"
 import State from "../State"
 import { debounce } from "../Debounce"
-import { OptionsGetValues, FieldParam, InputProps, SelectProps, FieldCheckedParam, UseFormR, CustomFieldParam, CustomSelectProps, CustomDateProps, ListInputsRef, Ref } from "../Types"
+import {
+   OptionsGetValues,
+   FieldParam,
+   InputProps,
+   UseFormR,
+   ListInputsRef,
+   InputRegisterProps,
+   InputPartialProps,
+} from "../Types"
 import dot from 'dot-prop-immutable'
+import { isRadio, isCheckbox } from "../Utils"
 
 export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetValues?: OptionsGetValues): UseFormR<TInitial> {
 
@@ -15,12 +24,6 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
 
    const listInputsRef = useRef<ListInputsRef>(Object.assign({}))
 
-   function setInputRef(path: string) {
-      listInputsRef.current = { ...listInputsRef.current, [path]: createRef() }
-      return listInputsRef.current[path]
-   }
-
-
    function resolveOptionsGetValues(e: TInitial) {
       if (optionsGetValues?.debounce) {
          return setValuesDebounce(e)
@@ -28,6 +31,16 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
       if (optionsGetValues?.onChange) {
          return setValuesOnChange(e)
       }
+   }
+
+
+   function registerInput(props: InputPartialProps) {
+      const inputProps = {
+         ...listInputsRef.current,
+         [props.name]: { ...props, ref: createRef<HTMLInputElement>() }
+      }
+      listInputsRef.current = inputProps
+      return listInputsRef.current[props.name]
    }
 
 
@@ -46,166 +59,69 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
    }
 
 
-   function resetReferenceValue(ref: Ref, value: any) {
-      if (!ref.current) {
+   function resetInputValue(input: InputRegisterProps, value: any) {
+      if (!input?.ref?.current) {
          return
       }
-      switch (ref.current?.type) {
-         case 'checkbox':
-            return ref.current.checked = Boolean(value)
-         case 'radio':
-            return ref.current.checked = ref.current.value === value
-         case 'file':
-            console.log(ref.current)
-            return ref.current.value = value || null
-         default:
-            return ref.current.value = String(value)
+      const type = input.ref.current.type;
+
+      if (isRadio(type)) {
+         return input.ref.current.checked = input.ref.current.value === value
+      } else if (isCheckbox(type)) {
+         return input.ref.current.checked = Boolean(value)
       }
+      return input.ref.current.value = value || null
    }
 
 
-   function select(param: FieldParam<SelectProps>): React.SelectHTMLAttributes<HTMLSelectElement> & { ref: any, type: string } {
-      function onChange(e: React.ChangeEvent<HTMLSelectElement>) {
-         state.current.change({
-            path: e.target.name,
-            value: e.target.value,
-         })
-      }
+   function input(param: FieldParam<InputProps>, ...args: Array<string>) {
 
-      const complementProps = (typeof param === 'string') ? { name: param } : { ...param }
-      setInputRef(complementProps.name)
+      const complementProps = (typeof param === 'string') ? { name: param, type: args[0] } : { ...param }
 
-      return {
-         ref: listInputsRef.current?.[complementProps.name],
-         value: state.current.getValue(complementProps.name),
-         defaultValue: state.current.getValue(complementProps.name),
-         onChange,
-         type: "select",
-         ...complementProps,
+      if (isCheckbox(complementProps.type) || isRadio(complementProps.type)) {
+         return baseChecked(complementProps)
       }
+      return baseDefaultInput(complementProps)
    }
 
+   function baseDefaultInput(complementProps: InputProps) {
 
-   function baseInput(param: FieldParam<InputProps>, type: string) {
-      function onChange(e: React.ChangeEvent<HTMLInputElement>) {
+      function onChange(e: ChangeEvent<HTMLInputElement>) {
          state.current.change({
             path: e.target.name,
-            value: type === "number" ? e.target.valueAsNumber :
-               type === 'date' ? e.target.valueAsDate :
-                  type === 'file' ? e.target.files :
+            value: complementProps.type === "number" ? e.target.valueAsNumber :
+               complementProps.type === 'date' ? e.target.valueAsDate :
+                  complementProps.type === 'file' ? e.target.files :
                      e.target.value
          })
       }
 
-      const complementProps = (typeof param === 'string') ? { name: param } : { ...param }
-      setInputRef(complementProps.name).current?.addEventListener('input', (e) => {
-         console.log('mudou', e.target)
-      })
-
-      return {
+      const props = registerInput({
          defaultValue: state.current.getValue(complementProps.name),
          onChange,
-         type,
-         ref: listInputsRef.current?.[complementProps.name],
-         ...complementProps
-      }
+         ...complementProps,
+      })
+
+      return props as InputProps
    }
 
-
-   function baseCheckbox(param: FieldParam<InputProps>, type: string, ...args: Array<any>) {
-      function onChange(e: React.ChangeEvent<HTMLInputElement>) {
+   function baseChecked(complementProps: InputProps) {
+      function onChange(e: ChangeEvent<HTMLInputElement>) {
          state.current.change({
             path: e.target.name,
             value: e.target.checked
          })
       }
 
-      const complementProps = (typeof param === 'string') ? { name: param, value: args[0] } : { ...param }
-      setInputRef(complementProps.name)
-
-      return {
-         defaultChecked: type === 'checkbox' ? state.current.getValue(complementProps.name) :
-            state.current.getValue(complementProps.name) === (args[0] || (param as any).value),
+      const props = registerInput({
+         defaultChecked: complementProps.type === 'radio' ?
+            state.current.getValue(complementProps.name) === complementProps.value :
+            state.current.getValue(complementProps.name),
          onChange,
-         type,
-         ref: listInputsRef.current?.[complementProps.name],
          ...complementProps
-      }
+      })
+      return props as InputProps
    }
-
-
-   function baseCustom<Custom = any>(param: Custom) {
-      const complementProps: any = (typeof param === 'string') ? { name: param } : { ...param }
-
-      function onChange<TEvent extends CustomFieldParam>(e: CustomFieldParam<TEvent['value']>) {
-         state.current.change({
-            path: complementProps.name,
-            value: e,
-         })
-      }
-
-      return {
-         defaultValue: state.current.getValue(complementProps.name),
-         onChange,
-         selected: state.current.getValue(complementProps.name)
-      }
-   }
-
-
-   function text(param: FieldParam<InputProps>) {
-      return baseInput(param, "text")
-   }
-
-
-   function password(param: FieldParam<InputProps>) {
-      return baseInput(param, "password")
-   }
-
-
-   function email(param: FieldParam<InputProps>) {
-      return baseInput(param, "email")
-   }
-
-
-   function file(param: FieldParam<InputProps>) {
-      return baseInput(param, "file")
-   }
-
-
-   function range(param: FieldParam<InputProps>) {
-      return baseInput(param, "range")
-   }
-
-
-   function date(param: FieldParam<InputProps>) {
-      return baseInput(param, "date")
-   }
-
-
-   function number(param: FieldParam<InputProps>) {
-      return baseInput(param, "number")
-   }
-
-
-   function checkbox(param: FieldParam<InputProps>) {
-      return baseCheckbox(param, "checkbox")
-   }
-
-
-   function radio(param: FieldCheckedParam<InputProps>, ...args: Array<string>) {
-      return baseCheckbox(param, "radio", ...args)
-   }
-
-
-   function custom<Custom = any>(param: Custom): CustomSelectProps {
-      return baseCustom(param)
-   }
-
-
-   function customDate<Custom = any>(param: Custom): CustomDateProps<string> {
-      return baseCustom(param) as unknown as CustomDateProps<string>
-   }
-
 
    useEffect(() => {
       const subscriberOnChange = state.current.subscribe('onChange', resolveOptionsGetValues)
@@ -213,11 +129,11 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
 
       const subscriberOnReset = state.current.subscribe('onReset', e => {
          Object.keys(listInputsRef.current).forEach(key => {
-            resetReferenceValue(listInputsRef.current[key], dot.get(e, key))
+            resetInputValue(listInputsRef.current[key], dot.get(e, key))
          })
       })
       const subscriberOnResetField = state.current.subscribe('onResetField', (e, ...args: Array<string>) => {
-         resetReferenceValue(listInputsRef.current[args[0]], dot.get(e, args[0]))
+         resetInputValue(listInputsRef.current[args[0]], dot.get(e, args[0]))
       })
 
       return () => {
@@ -231,6 +147,50 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
 
    return [
       { values, onSubmit, reset, resetField },
-      { text, checkbox, radio, select, number, custom, customDate, date, email, file, range, password }
+      { input, context: state.current }
    ]
+}
+
+
+
+export function useCustom<TInitial>(context: State<TInitial>): [any, any] {
+   const ref = useRef(null)
+   const [value, setValue] = useState()
+
+   function onChange(e: any) {
+      context.change({
+         path: (ref as any).current.props.name,
+         value: e
+      })
+      setValue(e)
+   }
+
+   useEffect(() => {
+      setValue(context.getValue((ref as any).current.props.name))
+   }, [context, ref])
+
+   useEffect(() => {
+      const resetAll = context.subscribe('onReset', e => {
+         setValue(dot.get(e, (ref as any).current.props.name))
+      })
+      const resetInput = context.subscribe('onResetField', e => {
+         setValue(dot.get(e, (ref as any).current.props.name))
+      })
+
+      return () => {
+         resetAll()
+         resetInput()
+      }
+   }, [context])
+
+   function registerInput(name: string) {
+      return {
+         name,
+         ref,
+         onChange,
+         value
+      }
+   }
+
+   return [registerInput, value]
 }
