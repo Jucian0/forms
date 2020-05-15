@@ -11,6 +11,7 @@ type Events = 'onChange' | 'onSubmit' | 'onReset' | 'onResetField'
 class State<T extends {}>{
 
    private state: T = Object.assign({});
+   private initialState: T = Object.assign({})
 
    private subscribers: { [k in Events]: Array<(e: T, ...args: Array<any>) => void> } = {
       onChange: [],
@@ -21,6 +22,7 @@ class State<T extends {}>{
 
    constructor(state: T) {
       this.state = state
+      this.initialState = state
    }
 
    get getState() {
@@ -32,13 +34,13 @@ class State<T extends {}>{
       this.notify('onChange')
    }
 
-   reset<T>(values: T) {
-      this.state = { ...values } as any
+   reset<T>() {
+      this.state = this.initialState
       this.notify('onReset')
    }
 
-   resetField<T>(values: T, field: string) {
-      const value = dot.get(values, field)
+   resetField(field: string) {
+      const value = dot.get(this.initialState, field)
 
       this.state = dot.set(this.state, field, value)
       this.notify('onResetField', field)

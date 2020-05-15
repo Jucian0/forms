@@ -11,6 +11,7 @@ import {
    InputRegisterProps,
    InputPartialProps,
    CustomProps,
+   RefFieldElement,
 } from "../Types"
 import dot from 'dot-prop-immutable'
 import { isRadio, isCheckbox } from "../Utils"
@@ -19,7 +20,6 @@ import { InferType } from "yup"
 export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetValues?: OptionsGetValues): UseFormR<TInitial> {
 
    const state = useRef(new State(initialState))
-   const resetState = useRef<{ [x: string]: any }>(initialState)
    const [values, setValues] = useState(initialState)
    const setValuesDebounce = useCallback(debounce(setValues, optionsGetValues?.debounce || 500), [optionsGetValues])
    const setValuesOnChange = setValues
@@ -53,12 +53,12 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
 
 
    function reset() {
-      state.current.reset(resetState.current)
+      state.current.reset()
    }
 
 
    function resetField(fieldPath: string) {
-      state.current.resetField(resetState.current, fieldPath)
+      state.current.resetField(fieldPath)
    }
 
 
@@ -97,7 +97,7 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
    }
 
 
-   function input(param: FieldParam<InputProps>, ...args: Array<string>): InputRegisterProps {
+   function input(param: FieldParam<InputProps>, ...args: Array<string>): InputRegisterProps<RefFieldElement> {
 
       const complementProps = (typeof param === 'string') ? { name: param, type: args[0] } : { ...param }
 

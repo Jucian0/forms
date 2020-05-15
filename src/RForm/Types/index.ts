@@ -52,10 +52,10 @@ export interface InputPartialProps {
    type?: string
    defaultChecked?: any
 }
-export interface InputRegisterProps<T = undefined> extends InputPartialProps {
-   ref?: T extends undefined ? RefObject<RefFieldElement extends RefObject<infer Ref> ? Ref : never> : RefObject<T>
+export interface InputRegisterProps<T = RefFieldElement> extends InputPartialProps {
+   ref?: T extends RefFieldElement ? RefObject<RefFieldElement extends RefObject<infer Ref> ? Ref : never> : RefObject<T>
 }
 
 export type ListInputsRef = {
-   [x: string]: InputRegisterProps<RefFieldElement extends HTMLInputElement ? HTMLInputElement : undefined>
+   [x: string]: InputRegisterProps<RefFieldElement extends HTMLInputElement ? HTMLInputElement : HTMLTextAreaElement>
 }
