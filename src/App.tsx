@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import './App.css';
-import { useForm, useCustom } from './RForm';
+import { useForm } from './RForm';
 import Select from 'react-select';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -35,11 +35,7 @@ const initialState = {
 
 const App: React.FC = () => {
 
-
-  const [{ values, onSubmit, reset, resetField }, { input, context }] = useForm(initialState)
-  const [select] = useCustom(context)
-  const [date, selected] = useCustom(context)
-
+  const [{ values, onSubmit, reset, resetField }, { input, custom }] = useForm(initialState)
 
   const submit = () => {
     onSubmit(data => {
@@ -119,7 +115,7 @@ const App: React.FC = () => {
           <div className="form-group">
             <label>React Select</label>
             <Select
-              {...select("iceCream.flavor")}
+              {...custom("iceCream.flavor")}
               options={options}
               showTimeSelect
               timeFormat="HH:mm"
@@ -136,8 +132,8 @@ const App: React.FC = () => {
           <div className="form-group">
             <label>Date Picker</label>
             <DatePicker
-              selected={selected}
-              {...date("year")}
+              selected={values.year}
+              {...custom({ name: "year", type: "custom" })}
               showTimeSelect
               timeFormat="HH:mm"
               timeIntervals={15}

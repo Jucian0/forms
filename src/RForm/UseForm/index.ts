@@ -10,9 +10,11 @@ import {
    ListInputsRef,
    InputRegisterProps,
    InputPartialProps,
+   CustomProps,
 } from "../Types"
 import dot from 'dot-prop-immutable'
 import { isRadio, isCheckbox } from "../Utils"
+import { InferType } from "yup"
 
 export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetValues?: OptionsGetValues): UseFormR<TInitial> {
 
@@ -24,21 +26,22 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
 
    const listInputsRef = useRef<ListInputsRef>(Object.assign({}))
 
-   function resolveOptionsGetValues(e: TInitial) {
+   const resolveOptionsGetValues = useCallback((e: TInitial) => {
       if (optionsGetValues?.debounce) {
          return setValuesDebounce(e)
       }
       if (optionsGetValues?.onChange) {
          return setValuesOnChange(e)
       }
-   }
+   }, [optionsGetValues, setValuesDebounce, setValuesOnChange])
 
 
    function registerInput(props: InputPartialProps) {
       const inputProps = {
          ...listInputsRef.current,
          [props.name]: { ...props, ref: createRef<HTMLInputElement>() }
-      }
+      } as ListInputsRef
+
       listInputsRef.current = inputProps
       return listInputsRef.current[props.name]
    }
@@ -59,7 +62,7 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
    }
 
 
-   function resetInputValue(input: InputRegisterProps, value: any) {
+   function resetInputValue(input: InputRegisterProps<any>, value: any) {
       if (!input?.ref?.current) {
          return
       }
@@ -73,8 +76,28 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
       return input.ref.current.value = value || null
    }
 
+   function custom<Custom = any>(param: Custom) {
+      const complementProps: any = (typeof param === 'string') ? { name: param } : { ...param }
 
-   function input(param: FieldParam<InputProps>, ...args: Array<string>) {
+      function onChange<Tv>(e: InferType<Tv>) {
+         state.current.change({
+            path: complementProps.name,
+            value: e,
+         })
+         setValues(dot.set(values, complementProps.name, e))
+      }
+
+      const props = registerInput({
+         value: dot.get(values, complementProps.name),
+         onChange,
+         ...complementProps,
+      })
+
+      return props as CustomProps
+   }
+
+
+   function input(param: FieldParam<InputProps>, ...args: Array<string>): InputRegisterProps {
 
       const complementProps = (typeof param === 'string') ? { name: param, type: args[0] } : { ...param }
 
@@ -102,7 +125,7 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
          ...complementProps,
       })
 
-      return props as InputProps
+      return props
    }
 
    function baseChecked(complementProps: InputProps) {
@@ -120,7 +143,7 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
          onChange,
          ...complementProps
       })
-      return props as InputProps
+      return props
    }
 
    useEffect(() => {
@@ -130,10 +153,12 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
       const subscriberOnReset = state.current.subscribe('onReset', e => {
          Object.keys(listInputsRef.current).forEach(key => {
             resetInputValue(listInputsRef.current[key], dot.get(e, key))
+            setValues(e)
          })
       })
       const subscriberOnResetField = state.current.subscribe('onResetField', (e, ...args: Array<string>) => {
          resetInputValue(listInputsRef.current[args[0]], dot.get(e, args[0]))
+         setValues(e)
       })
 
       return () => {
@@ -147,49 +172,6 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
 
    return [
       { values, onSubmit, reset, resetField },
-      { input, context: state.current }
+      { input, custom }
    ]
-}
-
-
-export function useCustom<TInitial>(context: State<TInitial>): [any, any] {
-   const ref = useRef(null)
-   const [value, setValue] = useState()
-
-   function onChange(e: any) {
-      context.change({
-         path: (ref as any).current.props.name,
-         value: e
-      })
-      setValue(e)
-   }
-
-   useEffect(() => {
-      setValue(context.getValue((ref as any).current.props.name))
-   }, [context, ref])
-
-   useEffect(() => {
-      const resetAll = context.subscribe('onReset', e => {
-         setValue(dot.get(e, (ref as any).current.props.name))
-      })
-      const resetInput = context.subscribe('onResetField', e => {
-         setValue(dot.get(e, (ref as any).current.props.name))
-      })
-
-      return () => {
-         resetAll()
-         resetInput()
-      }
-   }, [context])
-
-   function registerInput(name: string) {
-      return {
-         name,
-         ref,
-         onChange,
-         value
-      }
-   }
-
-   return [registerInput, value]
 }

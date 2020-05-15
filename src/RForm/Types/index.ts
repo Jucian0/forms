@@ -7,9 +7,16 @@ export interface OptionsGetValues {
 }
 
 type ObjectInputs = {
-   input: (e: any, ...args: Array<string>) => InputProps,
-   context: any
+   input: (param: FieldParam<InputProps>, ...args: Array<string>) => InputRegisterProps,
+   custom: (param: FieldParam<InputProps>, ...args: Array<string>) => CustomProps
 }
+
+
+export interface CustomProps {
+   onChange: <T>(e: T, option?: any) => void
+   value?: any
+}
+
 
 interface FormFunctions<TValues> {
    values: TValues
@@ -45,10 +52,10 @@ export interface InputPartialProps {
    type?: string
    defaultChecked?: any
 }
-export interface InputRegisterProps extends InputPartialProps {
-   ref: RefObject<RefFieldElement & { checked?: boolean }>
+export interface InputRegisterProps<T = undefined> extends InputPartialProps {
+   ref?: T extends undefined ? RefObject<RefFieldElement extends RefObject<infer Ref> ? Ref : never> : RefObject<T>
 }
 
 export type ListInputsRef = {
-   [x: string]: InputRegisterProps
+   [x: string]: InputRegisterProps<RefFieldElement extends HTMLInputElement ? HTMLInputElement : undefined>
 }
