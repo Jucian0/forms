@@ -3,26 +3,29 @@ import { useRef, useState, useEffect, useCallback, createRef, ChangeEvent } from
 import State from "../State"
 import { debounce } from "../Debounce"
 import {
-   OptionsGetValues,
    FieldParam,
    InputProps,
    UseFormR,
    ListInputsRef,
    InputRegisterProps,
    InputPartialProps,
-   CustomProps,
    RefFieldElement,
+   UseForm,
 } from "../Types"
 import dot from 'dot-prop-immutable'
 import { isRadio, isCheckbox } from "../Utils"
 import { InferType } from "yup"
 
-export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetValues?: OptionsGetValues): UseFormR<TInitial> {
+export function useForm<TInitial extends {}, Schema>({
+   initialValues,
+   validation,
+   ...optionsGetValues
+}: UseForm<TInitial, Schema>): UseFormR<TInitial> {
 
-   const state = useRef(new State(initialState))
-   const [values, setValues] = useState(initialState)
-   const setValuesDebounce = useCallback(debounce(setValues, optionsGetValues?.debounce || 500), [optionsGetValues])
+   const state = useRef(new State(initialValues))
+   const [values, setValues] = useState(initialValues)
    const setValuesOnChange = setValues
+   const setValuesDebounce = useCallback(debounce(setValues, optionsGetValues?.debounce || 500), [optionsGetValues])
 
    const listInputsRef = useRef<ListInputsRef>(Object.assign({}))
 
@@ -76,7 +79,7 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
       return input.ref.current.value = value || null
    }
 
-   function custom<Custom = any>(param: Custom) {
+   function custom<Custom = any>(param: Custom): InputRegisterProps<RefFieldElement> {
       const complementProps: any = (typeof param === 'string') ? { name: param } : { ...param }
 
       function onChange<Tv>(e: InferType<Tv>) {
@@ -93,7 +96,7 @@ export function useForm<TInitial extends {}>(initialState: TInitial, optionsGetV
          ...complementProps,
       })
 
-      return props as CustomProps
+      return props
    }
 
 

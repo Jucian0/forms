@@ -1,22 +1,17 @@
 import { InputHTMLAttributes, RefObject } from "react";
 
-export interface OptionsGetValues {
+export interface UseForm<TInitialValues = {}, TValidation = any> {
+   initialValues: TInitialValues
+   validation?: TValidation
    onChange?: boolean
    debounce?: number
    onSubmit?: boolean
 }
 
 type ObjectInputs = {
-   input: (param: FieldParam<InputProps>, ...args: Array<string>) => InputRegisterProps,
-   custom: (param: FieldParam<InputProps>, ...args: Array<string>) => CustomProps
+   input: InputRegister,
+   custom: InputRegister
 }
-
-
-export interface CustomProps {
-   onChange: <T>(e: T, option?: any) => void
-   value?: any
-}
-
 
 interface FormFunctions<TValues> {
    values: TValues
@@ -29,6 +24,7 @@ export type UseFormR<TValues> = [
    FormFunctions<TValues>,
    ObjectInputs
 ]
+
 
 export type RefFieldElement =
    | HTMLInputElement
@@ -47,7 +43,7 @@ export interface InputPartialProps {
    name: string
    defaultValue?: any
    value?: any
-   onChange?: (...args: Array<any>) => void
+   onChange: (...args: Array<any>) => void
    onBlur?: (...args: Array<any>) => void
    type?: string
    defaultChecked?: any
@@ -59,3 +55,6 @@ export interface InputRegisterProps<T = RefFieldElement> extends InputPartialPro
 export type ListInputsRef = {
    [x: string]: InputRegisterProps<RefFieldElement extends HTMLInputElement ? HTMLInputElement : HTMLTextAreaElement>
 }
+
+type InputRegister = (param: FieldParam<InputProps>, ...args: Array<string>) => InputRegisterProps
+

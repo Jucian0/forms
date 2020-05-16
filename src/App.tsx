@@ -12,7 +12,7 @@ const options = [
 ]
 
 
-const initialState = {
+const initialValues = {
   name: "jose antonio",
   email: "jose@hotmail.com",
   password: "123456",
@@ -35,7 +35,11 @@ const initialState = {
 
 const App: React.FC = () => {
 
-  const [{ values, onSubmit, reset, resetField }, { input, custom }] = useForm(initialState)
+  const [{ values, onSubmit, reset, resetField }, { input, custom }] = useForm({
+    initialValues,
+    validation: {},
+    onChange: true
+  })
 
   const submit = () => {
     onSubmit(data => {
