@@ -14,58 +14,26 @@ import {
 } from "../Types"
 import dot from 'dot-prop-immutable'
 import { isRadio, isCheckbox } from "../Utils"
-import { InferType } from "yup"
+import { useValidation } from "../UseValidation"
+import { Schema } from "yup"
 
-export function useForm<TInitial extends {}, Schema>({
+
+export function useForm<TInitial extends {}>({
    initialValues,
    validation,
    ...optionsGetValues
-}: UseForm<TInitial, Schema>): UseFormR<TInitial> {
+}: UseForm<TInitial, Schema<TInitial>>): UseFormR<TInitial> {
 
-   const state = useRef(new State(initialValues))
-   const [values, setValues] = useState(initialValues)
-   const setValuesOnChange = setValues
+   const state = useRef(new State(initialValues || {} as TInitial))
+   const listInputsRef = useRef<ListInputsRef>(Object.assign({}))
+   const [values, setValues] = useState(initialValues || {} as TInitial)
+   const inputsTouched = useRef<TInitial>({} as TInitial)
+   const { errors, isValid } = useValidation(values, validation || {} as any)
+
    const setValuesDebounce = useCallback(debounce(setValues, optionsGetValues?.debounce || 500), [optionsGetValues])
 
-   const listInputsRef = useRef<ListInputsRef>(Object.assign({}))
+   function setRefValue(input: InputRegisterProps<any>, value: any) {
 
-   const resolveOptionsGetValues = useCallback((e: TInitial) => {
-      if (optionsGetValues?.debounce) {
-         return setValuesDebounce(e)
-      }
-      if (optionsGetValues?.onChange) {
-         return setValuesOnChange(e)
-      }
-   }, [optionsGetValues, setValuesDebounce, setValuesOnChange])
-
-
-   function registerInput(props: InputPartialProps) {
-      const inputProps = {
-         ...listInputsRef.current,
-         [props.name]: { ...props, ref: createRef<HTMLInputElement>() }
-      } as ListInputsRef
-
-      listInputsRef.current = inputProps
-      return listInputsRef.current[props.name]
-   }
-
-
-   function onSubmit(fn: (values: TInitial) => void) {
-      return fn(state.current.getState)
-   }
-
-
-   function reset() {
-      state.current.reset()
-   }
-
-
-   function resetField(fieldPath: string) {
-      state.current.resetField(fieldPath)
-   }
-
-
-   function resetInputValue(input: InputRegisterProps<any>, value: any) {
       if (!input?.ref?.current) {
          return
       }
@@ -79,20 +47,78 @@ export function useForm<TInitial extends {}, Schema>({
       return input.ref.current.value = value || null
    }
 
+   function registerInput(props: InputPartialProps) {
+      const inputProps = {
+         ...listInputsRef.current,
+         [props.name]: { ...props, ref: createRef<HTMLInputElement>() }
+      } as ListInputsRef
+
+      listInputsRef.current = inputProps
+      return listInputsRef.current[props.name]
+   }
+
+
+   function onSubmit(fn: (values: TInitial) => void) {
+      setValues({ ...state.current.getState })
+
+      Object.keys(listInputsRef.current).forEach(key => {
+         inputsTouched.current = dot.set(inputsTouched.current, listInputsRef.current[key].name, true)
+      })
+
+      if (validation?.isValidSync(state.current.getState)) {
+         return fn(state.current.getState)
+      }
+
+   }
+
+
+   function reset() {
+      state.current.reset()
+      Object.keys(listInputsRef.current).forEach(key => {
+         setRefValue(listInputsRef.current[key], dot.get(state.current.getState, key))
+         inputsTouched.current = dot.set(inputsTouched.current, listInputsRef.current[key].name, false)
+      })
+      setValues(state.current.getState)
+   }
+
+
+   function resetField(fieldPath: string) {
+      const value = state.current.resetField(fieldPath)
+      if (listInputsRef.current[fieldPath]?.type === "custom") {
+         setValues(dot.set(values, fieldPath, value))
+      }
+      setRefValue(listInputsRef.current[fieldPath], value)
+   }
+
+   function setOnBlur(fieldPath: string) {
+      if (inputsTouched.current) {
+         inputsTouched.current = dot.set(inputsTouched.current, fieldPath, true)
+         if (optionsGetValues.debounce || optionsGetValues.onChange) {
+            setValues({ ...values })
+         }
+      }
+   }
+
+
    function custom<Custom = any>(param: Custom): InputRegisterProps<RefFieldElement> {
       const complementProps: any = (typeof param === 'string') ? { name: param } : { ...param }
 
-      function onChange<Tv>(e: InferType<Tv>) {
+      function onChange<Tv>(e: any) {
          state.current.change({
-            path: complementProps.name,
+            fieldPath: complementProps.name,
             value: e,
          })
-         setValues(dot.set(values, complementProps.name, e))
+      }
+
+      function onBlur() {
+         setOnBlur(complementProps.name)
       }
 
       const props = registerInput({
          value: dot.get(values, complementProps.name),
          onChange,
+         onBlur,
+         type: "custom",
          ...complementProps,
       })
 
@@ -110,11 +136,12 @@ export function useForm<TInitial extends {}, Schema>({
       return baseDefaultInput(complementProps)
    }
 
+
    function baseDefaultInput(complementProps: InputProps) {
 
       function onChange(e: ChangeEvent<HTMLInputElement>) {
          state.current.change({
-            path: e.target.name,
+            fieldPath: e.target.name,
             value: complementProps.type === "number" ? e.target.valueAsNumber :
                complementProps.type === 'date' ? e.target.valueAsDate :
                   complementProps.type === 'file' ? e.target.files :
@@ -122,21 +149,31 @@ export function useForm<TInitial extends {}, Schema>({
          })
       }
 
+      function onBlur() {
+         setOnBlur(complementProps.name)
+      }
+
       const props = registerInput({
          defaultValue: state.current.getValue(complementProps.name),
          onChange,
+         onBlur,
          ...complementProps,
       })
 
       return props
    }
 
+
    function baseChecked(complementProps: InputProps) {
       function onChange(e: ChangeEvent<HTMLInputElement>) {
          state.current.change({
-            path: e.target.name,
-            value: e.target.checked
+            fieldPath: e.target.name,
+            value: complementProps.type === 'radio' ? e.target.value : e.target.checked
          })
+      }
+
+      function onBlur() {
+         setOnBlur(complementProps.name)
       }
 
       const props = registerInput({
@@ -144,37 +181,43 @@ export function useForm<TInitial extends {}, Schema>({
             state.current.getValue(complementProps.name) === complementProps.value :
             state.current.getValue(complementProps.name),
          onChange,
+         onBlur,
          ...complementProps
       })
       return props
    }
 
-   useEffect(() => {
-      const subscriberOnChange = state.current.subscribe('onChange', resolveOptionsGetValues)
-      const subscriberOnSubmit = state.current.subscribe('onSubmit', resolveOptionsGetValues)
+   const hasCustomInputs = useCallback(() => {
+      return Object.keys(listInputsRef.current)
+         .filter(ref => listInputsRef.current[ref].type === 'custom')
+         .map(field => listInputsRef.current[field].name)
+   }, [])
 
-      const subscriberOnReset = state.current.subscribe('onReset', e => {
-         Object.keys(listInputsRef.current).forEach(key => {
-            resetInputValue(listInputsRef.current[key], dot.get(e, key))
-            setValues(e)
-         })
-      })
-      const subscriberOnResetField = state.current.subscribe('onResetField', (e, ...args: Array<string>) => {
-         resetInputValue(listInputsRef.current[args[0]], dot.get(e, args[0]))
-         setValues(e)
-      })
-
-      return () => {
-         subscriberOnChange()
-         subscriberOnSubmit()
-         subscriberOnReset()
-         subscriberOnResetField()
+   const setFormState = useCallback((newValues: TInitial, fieldPath: string) => {
+      if (JSON.stringify(newValues) === JSON.stringify(values)) {
+         return
       }
-   }, [resolveOptionsGetValues])
+      if (optionsGetValues?.debounce) {
+         return setValuesDebounce(newValues)
+      } else if (optionsGetValues?.onChange) {
+         return setValues(newValues)
+      } else if (hasCustomInputs()) {
+         if (hasCustomInputs().includes(fieldPath)) {
+            return setValues(newValues)
+         }
+      }
 
+   }, [hasCustomInputs, optionsGetValues, setValuesDebounce, values])
+
+   useEffect(() => {
+      const subscriber = state.current.subscribe(setFormState)
+      return () => {
+         subscriber()
+      }
+   }, [setFormState])
 
    return [
-      { values, onSubmit, reset, resetField },
+      { values, onSubmit, reset, resetField, errors, isValid, touched: inputsTouched.current },
       { input, custom }
    ]
 }

@@ -1,24 +1,12 @@
 import dot from 'dot-prop-immutable'
-
-
-type OnChange<T> = {
-   value: T,
-   path: string
-}
-
-type Events = 'onChange' | 'onSubmit' | 'onReset' | 'onResetField'
+import { Subscribers, OnChange, Subscriber } from '../Types';
 
 class State<T extends {}>{
 
    private state: T = Object.assign({});
    private initialState: T = Object.assign({})
 
-   private subscribers: { [k in Events]: Array<(e: T, ...args: Array<any>) => void> } = {
-      onChange: [],
-      onReset: [],
-      onSubmit: [],
-      onResetField: []
-   }
+   private subscribers: Subscribers<T> = []
 
    constructor(state: T) {
       this.state = state
@@ -29,38 +17,37 @@ class State<T extends {}>{
       return this.state
    }
 
-   change<T>({ value, path }: OnChange<T>) {
-      this.state = dot.set(this.state, path, value)
-      this.notify('onChange')
+   change({ value, fieldPath }: OnChange) {
+      this.state = dot.set(this.state, fieldPath, value)
+      this.notify(fieldPath)
    }
 
-   reset<T>() {
+   reset() {
       this.state = this.initialState
-      this.notify('onReset')
+      this.notify()
    }
 
-   resetField(field: string) {
-      const value = dot.get(this.initialState, field)
-
-      this.state = dot.set(this.state, field, value)
-      this.notify('onResetField', field)
+   resetField(fieldPath: string) {
+      const value = dot.get(this.initialState, fieldPath)
+      this.state = dot.set(this.state, fieldPath, value)
+      this.notify(fieldPath)
    }
 
    getValue(path: string) {
       return dot.get(this.state, path)
    }
 
-   subscribe(event: Events, fn: (e: T) => void) {
+   subscribe(fn: Subscriber<T>) {
 
-      this.subscribers[event] = [...this.subscribers[event], fn]
+      this.subscribers = [...this.subscribers, fn]
 
       return () => {
-         this.subscribers[event] = this.subscribers[event].filter(subscribe => subscribe !== fn)
+         this.subscribers = this.subscribers.filter(subscribe => subscribe !== fn)
       }
    }
 
-   notify(e: Events, ...args: Array<any>) {
-      this.subscribers[e].forEach(fn => fn(this.getState, ...args))
+   notify(...args: Array<string>) {
+      this.subscribers.forEach(fn => fn(this.getState, args[0]))
    }
 
 }

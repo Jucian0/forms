@@ -1,32 +1,39 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useState } from "react"
 import { ValidationError, Schema } from "yup"
+import dot from 'dot-prop-immutable'
 
-const useValidation = <TValues>(values: TValues, schema: Schema<TValues>) => {
-   const [errors, setErrors] = useState({})
-   const [isValid, setIsValid] = useState(false)
+const useValidation = <TValues extends {}>(values: TValues, schema: Schema<TValues>) => {
+   const [errors, setErrors] = useState<TValues>({} as TValues)
 
    const validate = useCallback(async () => {
       try {
-         await schema.validate(values, { abortEarly: false })
-         setErrors({})
-         setIsValid(true)
+         const dd = await schema.validate(values, { abortEarly: false })
+         setErrors({} as TValues)
       } catch (e) {
          if (e instanceof ValidationError) {
-            const errors: any = {}
-            e.inner.forEach((key) => {
-               errors[key.path] = key.message
+            let errors = {}
+            e.inner.forEach(key => {
+               const path = key.path
+                  .split('[')
+                  .join('.')
+                  .split(']')
+                  .join('')
+
+               errors = dot.set(errors, path, key.message)
             })
-            setErrors(errors)
-            setIsValid(false)
+            setErrors(errors as TValues)
          }
       }
+
    }, [schema, values])
 
    useEffect(() => {
       validate()
    }, [validate])
 
-   return { errors, isValid }
+
+
+   return { errors, isValid: Object.keys(errors).length === 0 }
 }
 
-export default useValidation
+export { useValidation }

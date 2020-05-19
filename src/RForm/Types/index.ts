@@ -1,7 +1,10 @@
 import { InputHTMLAttributes, RefObject } from "react";
 
+/**
+ * Types params hook useForm
+ */
 export interface UseForm<TInitialValues = {}, TValidation = any> {
-   initialValues: TInitialValues
+   initialValues?: TInitialValues
    validation?: TValidation
    onChange?: boolean
    debounce?: number
@@ -13,11 +16,15 @@ type ObjectInputs = {
    custom: InputRegister
 }
 
+
 interface FormFunctions<TValues> {
    values: TValues
    onSubmit: (fn: (values: TValues) => void) => void
    reset: () => void
    resetField: (field: string) => void
+   errors: TValues
+   touched: TValues
+   isValid: Boolean
 }
 
 export type UseFormR<TValues> = [
@@ -58,3 +65,16 @@ export type ListInputsRef = {
 
 type InputRegister = (param: FieldParam<InputProps>, ...args: Array<string>) => InputRegisterProps
 
+
+
+/**
+ * Types state form
+ */
+export type OnChange = {
+   value: any,
+   fieldPath: string
+}
+
+export type Subscriber<T> = (e: T, fieldPath: string) => void
+
+export type Subscribers<T> = Array<Subscriber<T>>
