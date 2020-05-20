@@ -57,19 +57,19 @@ export function useForm<TInitial extends {}>({
       return listInputsRef.current[props.name]
    }
 
+   const onSubmit = useCallback((fn: (values: TInitial) => void) => {
+      return (e: React.BaseSyntheticEvent) => {
+         e.preventDefault()
+         setValues({ ...state.current.getState })
+         Object.keys(listInputsRef.current).forEach(key => {
+            inputsTouched.current = dot.set(inputsTouched.current, listInputsRef.current[key].name, true)
+         })
 
-   function onSubmit(fn: (values: TInitial) => void) {
-      setValues({ ...state.current.getState })
-
-      Object.keys(listInputsRef.current).forEach(key => {
-         inputsTouched.current = dot.set(inputsTouched.current, listInputsRef.current[key].name, true)
-      })
-
-      if (validation?.isValidSync(state.current.getState)) {
-         return fn(state.current.getState)
+         if (validation?.isValidSync(state.current.getState)) {
+            fn(state.current.getState)
+         }
       }
-
-   }
+   }, [validation])
 
 
    function reset() {

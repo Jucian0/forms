@@ -19,7 +19,7 @@ type ObjectInputs = {
 
 interface FormFunctions<TValues> {
    values: TValues
-   onSubmit: (fn: (values: TValues) => void) => void
+   onSubmit: (fn: (values: TValues) => void) => (e: React.BaseSyntheticEvent) => void
    reset: () => void
    resetField: (field: string) => void
    errors: TValues
