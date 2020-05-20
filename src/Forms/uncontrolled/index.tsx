@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import * as yup from 'yup'
-import { useForm } from '../../RForm';
 import ReactJson from 'react-json-view'
+import { useForm } from 'react-data-forms';
 
 
-const validation = yup.object().shape({
+const validation: any = yup.object().shape({
    name: yup.string().required("this field is required"),
    email: yup.string().required("this field is required").email("this field must be a valid email"),
    address: yup.array(yup.object().shape({
@@ -13,24 +13,18 @@ const validation = yup.object().shape({
    }))
 });
 
-const options = [
-   { value: 'chocolate', label: 'Chocolate', },
-   { value: 'strawberry', label: 'Strawberry' },
-   { value: 'vanilla', label: 'Vanilla' }
-]
-
 const initialValues = {
    name: "Jesse Woodson James",
    email: "jesse@jesse.com",
    address: [
       {
          street: "",
-         number: 0
+         number: 50
       }
    ],
    options: "value 1",
    radio: "op3",
-   accept: true
+   accept: true,
 }
 
 const Uncontrolled: React.FC = () => {

@@ -3,11 +3,11 @@ import Select from 'react-select';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import * as yup from 'yup'
-import { useForm } from '../../RForm';
+import { useForm } from 'react-data-forms';
 import ReactJson from 'react-json-view';
 
 
-const validation = yup.object().shape({
+const validation: any = yup.object().shape({
    name: yup.string().required("this field is required"),
    password: yup.string().required().min(6, 'password '),
    email: yup.string().required("this field is required").email("this field must be a valid email"),
@@ -25,7 +25,7 @@ const options = [
 
 const Controlled: React.FC = () => {
 
-   const [{ values, reset, errors, touched }, { input, custom }] = useForm({ validation, onChange: true })
+   const [{ values, reset, errors, touched }, { input, custom }] = useForm<any>({ validation, onChange: true })
 
    return (
       <div className="row">

@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import * as yup from 'yup'
-import { useForm } from '../../RForm';
+import { useForm } from 'react-data-forms';
 import ReactJson from 'react-json-view'
 
 
-const validation = yup.object().shape({
+const validation: any = yup.object().shape({
    name: yup.string().required("this field is required"),
    email: yup.string().required("this field is required").email("this field must be a valid email"),
    address: yup.array(yup.object().shape({
@@ -92,7 +92,7 @@ const Debounced: React.FC = () => {
          </div>
 
          <div className="col-lg-3">
-            <button type="button" className="btn btn-primary" onClick={() => resetField("year")}>Reset number</button>
+            <button type="button" className="btn btn-primary" onClick={() => resetField("address.0.number")}>Reset number</button>
          </div>
          <div className="col-lg-3">
             <button type="button" className="btn btn-primary" onClick={() => reset()}>Reset All</button>
