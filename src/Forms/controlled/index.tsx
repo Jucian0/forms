@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import * as yup from 'yup'
-import { useForm } from 'react-data-forms';
+import { useForm, useValidation } from 'react-data-forms';
 import ReactJson from 'react-json-view'
 
 
@@ -35,7 +35,8 @@ const initialValues = {
 
 const Controlled: React.FC = () => {
 
-   const [{ values, reset, resetField, errors, touched }, { input }] = useForm({ initialValues, validation, onChange: true })
+   const [{ values, reset, resetField, touched }, { input }] = useForm({ initialValues, validation, onChange: true })
+   const { errors } = useValidation?.(values, validation) as any
 
    return (
       <div className="row">
