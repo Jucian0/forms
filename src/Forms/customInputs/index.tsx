@@ -30,7 +30,7 @@ const options = [
   { value: "vanilla", label: "Vanilla" }
 ];
 
-const Controlled: React.FC = () => {
+const CustomInputs: React.FC = () => {
   const [{ values, reset, errors, touched }, { input, custom }] = useForm<any>({
     validation,
     onChange: true
@@ -133,4 +133,4 @@ const Controlled: React.FC = () => {
   );
 };
 
-export default Controlled;
+export default CustomInputs;

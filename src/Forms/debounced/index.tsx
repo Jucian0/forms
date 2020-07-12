@@ -35,7 +35,7 @@ const initialValues = {
 
 const Debounced: React.FC = () => {
 
-   const [{ values, reset, resetField, errors, touched }, { input }] = useForm({ initialValues, validation, debounce: 300 })
+   const [{ values, reset, resetInput, errors, touched }, { input }] = useForm({ initialValues, validation, debounce: 300 })
 
    return (
       <div className="row">
@@ -96,7 +96,7 @@ const Debounced: React.FC = () => {
          </div>
 
          <div className="col-lg-3">
-            <button type="button" className="btn btn-primary" onClick={() => resetField("address.0.number")}>Reset number</button>
+            <button type="button" className="btn btn-primary" onClick={() => resetInput("address.0.number")}>Reset number</button>
          </div>
          <div className="col-lg-3">
             <button type="button" className="btn btn-primary" onClick={() => reset()}>Reset All</button>
