@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import * as yup from 'yup'
-import { useForm } from 'react-data-forms';
+import { useForm } from 'useforms';
 import ReactJson from 'react-json-view'
 
 
@@ -39,33 +39,33 @@ const Debounced: React.FC = () => {
 
    return (
       <div className="row">
-         <div className="col-lg-6">
+         <div className="col-lg-4">
             <h2>Debounce Form</h2>
             <div className="form-group">
                <label>Nome</label>
-               <input className="form-control" autoComplete="off" {...input('name', 'text')} />
+               <input className="form-control" {...input('name', 'text')} />
                <span className="text-danger">{touched.name && errors.name}</span>
             </div>
             <div className="form-group">
                <label>E-mail</label>
-               <input className="form-control" autoComplete="off" {...input("email", "email")} />
+               <input className="form-control" {...input("email", "email")} />
                <span className="text-danger">{touched.email && errors.email}</span>
             </div>
             <div className="form-group">
                <label>Bio</label>
-               <textarea className="form-control" autoComplete="off" {...input("bio")} />
+               <textarea className="form-control" {...input("bio")} />
             </div>
 
             <div>
                <h3>Address</h3>
                <div className="form-group">
                   <label>Street</label>
-                  <input className="form-control" autoComplete="off" {...input({ name: "address.0.street", type: "text" })} />
+                  <input className="form-control" {...input({ name: "address.0.street", type: "text" })} />
                   <span className="text-danger">{touched.address?.[0].street && errors.address?.[0].street}</span>
                </div>
                <div className="form-group">
                   <label>Number</label>
-                  <input className="form-control" autoComplete="off" {...input("address.0.number", "number")} />
+                  <input className="form-control" {...input("address.0.number", "number")} />
                   <span className="text-danger">{touched.address?.[0].number && errors.address?.[0].number}</span>
                </div>
             </div>
@@ -81,14 +81,18 @@ const Debounced: React.FC = () => {
                </div>
                <div className="form-group">
                   <label htmlFor="accept">Accept</label>
-                  <input className="form-control" autoComplete="off" {...input("accept", "checkbox")} />
+                  <input className="form-control" {...input("accept", "checkbox")} />
                </div>
             </div>
          </div>
 
-         <div className="col-lg-6">
+         <div className="col-lg-4">
             <h2>Form Values</h2>
             <ReactJson src={values} theme="solarized" />
+         </div>
+         <div className="col-lg-4">
+            <h2>Form Errors</h2>
+            <ReactJson src={errors} theme="solarized" />
          </div>
 
          <div className="col-lg-3">
